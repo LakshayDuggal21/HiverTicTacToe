@@ -19,7 +19,7 @@
  * 
  */
 const grid = [];
-const GRID_LENGTH = 3;
+const GRID_LENGTH = 5;
 let turn = 'X';
 let turns = 0;
 
@@ -101,138 +101,145 @@ window.onclick = function(event) {
     }
 }
 }
-
+function checkstatus(){
+    if(turns >= 2*GRID_LENGTH - 1){
+        var win = checkWinner(turn);
+        if(win != -1){
+            flashWinner(win);
+            return true;
+        }
+    }
+    if(turns == GRID_LENGTH*GRID_LENGTH){
+        flashWinner(0);
+        return true;
+    }
+    return false;
+}
 function onBoxClick() {
     var rowIdx = this.getAttribute("rowIdx");
     var colIdx = this.getAttribute("colIdx");
     if(grid[colIdx][rowIdx] != 0){
         return;
     }
-    let newValue = 1;
+    let newValue = 1 , done0 = false,doneX = false;
     grid[colIdx][rowIdx] = newValue;
     turns +=1
     turn = 'X';
     renderMainGrid();
-    if(turns >= 4){
-        var win = checkWinner(turn);
-        if(win != -1){
-            flashWinner(win);
-            return;
-        }
-    }
-    if(turns == 9){
-        flashWinner(0);
+    if (checkstatus()){
         return;
-    }
+    };
     turn = '0';
-    ComputerTurn();
+    done0 = ComputerTurn(2);//check for computer winning combination
+    if (!done0){
+        doneX = ComputerTurn(1);// block player winning combination
+    } 
+     
+    if(!doneX && !done0){
+        index = GenerateRandomIndex();
+        grid[index[0]][index[1]] = 2;
+    } 
     turns +=1;
     renderMainGrid();
-    if(turns >= 4){
-        var win = checkWinner(turn);
-        if(win != -1){
-            flashWinner(win);
-            return;
-        }
-    }
+    if (checkstatus()){
+        return;
+    };
     addClickHandlers();
 }
 
 function GenerateRandomIndex(){
-    var colIdx ;
-    var rowIdx ;
+    let colIdx ;
+    let rowIdx ;
     while (1){
-        colIdx = Math.floor((Math.random() * (GRID_LENGTH-1)));
-        rowIdx = Math.floor((Math.random() * (GRID_LENGTH-1)));
+        colIdx = Math.floor((Math.random() * (GRID_LENGTH)));
+        rowIdx = Math.floor((Math.random() * (GRID_LENGTH)));
         if(grid[colIdx][rowIdx] == 0)
         break;
     }
     return [colIdx,rowIdx];
 }
-function ComputerTurn() {
-    for (let colIdx = 0;colIdx < GRID_LENGTH ; colIdx++) {
-        for (let rowidx = 0; rowidx < GRID_LENGTH;rowidx++) {
-            if ((grid[colIdx][rowidx] == 2 && grid[(colIdx+1)%GRID_LENGTH][rowidx] == 2)){
-               if(grid[(colIdx+2)%GRID_LENGTH][rowidx] == 0){
-                grid[(colIdx+2)%GRID_LENGTH][rowidx] = 2;
-               return;
-               }
-            }
-        }
+function ComputerTurn(value) {
+    if(turns < 2*GRID_LENGTH - 3){
+        return false;
     }
+    let index = -1, count = 0 , pdcount = 0,sdcount = 0 , indexpd = [],indexsd = [];
     for (let colIdx = 0;colIdx < GRID_LENGTH ; colIdx++) {
         for (let rowidx = 0; rowidx < GRID_LENGTH;rowidx++) {
-            if ( (grid[colIdx][(rowidx)%GRID_LENGTH] == 2 && grid[colIdx][(rowidx+1)%GRID_LENGTH] == 2)){
-               if(grid[colIdx][(rowidx+2)%GRID_LENGTH] == 0){
-                grid[colIdx][(rowidx+2)%GRID_LENGTH] = 2;
-               return;
-               }
+        
+            if(grid[rowidx][colIdx] == value){
+                count++;
+            }
+            if(grid[rowidx][colIdx] == 0){
+                index = rowidx;
             }
         }
+        if(count == GRID_LENGTH - 1) {
+        if(index != -1){
+            grid[index][colIdx] = 2;
+        return true;
+        }
+        }
+        count = 0;
+        index = -1;
+    }
+    count = 0;
+    index = -1;
+    for (let rowidx = 0; rowidx < GRID_LENGTH;rowidx++){
+        for (let colIdx = 0;colIdx < GRID_LENGTH ; colIdx++){
+            if(grid[rowidx][colIdx] == value){
+                count++;
+            }
+            if(grid[rowidx][colIdx] == 0){
+                index = colIdx;
+            }
+        }
+        if(count == GRID_LENGTH - 1) {
+            if(index != -1){
+            grid[rowidx][index] = 2;
+            return true;
+            }
+        }
+            count = 0;
+            index = -1;
     }
     for (let colIdx = 0;colIdx < GRID_LENGTH ; colIdx++) {
         for (let rowidx = 0; rowidx < GRID_LENGTH;rowidx++) {
             if((rowidx == colIdx) ){
-            if ( (grid[colIdx][rowidx] == 2 && grid[(colIdx+1)%GRID_LENGTH][(rowidx+1)%GRID_LENGTH] == 2)){
-                if(grid[(colIdx+2)%GRID_LENGTH][(rowidx+2)%GRID_LENGTH] == 0){
-               grid[(colIdx+2)%GRID_LENGTH][(rowidx+2)%GRID_LENGTH] = 2;
-               return;
-                }
+            
+            if(grid[colIdx][rowidx] == value){
+                pdcount++;
             }
-        }
-        if((colIdx == GRID_LENGTH - rowidx - 1)){
-            if ( (grid[colIdx][rowidx] == 2 && grid[(colIdx+1)%GRID_LENGTH][(rowidx-1 +GRID_LENGTH )%GRID_LENGTH] == 2)){
-                if(grid[(colIdx+2)%GRID_LENGTH][(rowidx-2 + GRID_LENGTH)%GRID_LENGTH] == 0){
-                grid[(colIdx+2)%GRID_LENGTH][(rowidx-2 + GRID_LENGTH)%GRID_LENGTH] = 2;
-                return;
-                }
-             }
-        }
-        }
-    }
-    for (let colIdx = 0;colIdx < GRID_LENGTH ; colIdx++) {
-        for (let rowidx = 0; rowidx < GRID_LENGTH;rowidx++) {
-            if ((grid[colIdx][rowidx] == 1 && grid[(colIdx+1)%GRID_LENGTH][rowidx] == 1) ){
-               if(grid[(colIdx+2)%GRID_LENGTH][rowidx] == 0){
-                grid[(colIdx+2)%GRID_LENGTH][rowidx] = 2;
-               return;
-               }
+            if(grid[colIdx][rowidx] == 0){
+                indexpd = [colIdx,rowidx]
             }
-        }
-    }
-    for (let colIdx = 0;colIdx < GRID_LENGTH ; colIdx++) {
-        for (let rowidx = 0; rowidx < GRID_LENGTH;rowidx++) {
-            if ((grid[colIdx][(rowidx)%GRID_LENGTH] == 1 && grid[colIdx][(rowidx+1)%GRID_LENGTH] == 1) ){
-               if(grid[colIdx][(rowidx+2)%GRID_LENGTH] == 0){
-                grid[colIdx][(rowidx+2)%GRID_LENGTH] = 2;
-               return;
-               }
-            }
-        }
-    }
-    for (let colIdx = 0;colIdx < GRID_LENGTH ; colIdx++) {
-        for (let rowidx = 0; rowidx < GRID_LENGTH;rowidx++) {
-            if((rowidx == colIdx)){
-            if ((grid[colIdx][rowidx] == 1 && grid[(colIdx+1)%GRID_LENGTH][(rowidx+1)%GRID_LENGTH] == 1) ){
-               if(grid[(colIdx+2)%GRID_LENGTH][(rowidx+2)%GRID_LENGTH] == 0){
-                grid[(colIdx+2)%GRID_LENGTH][(rowidx+2)%GRID_LENGTH] = 2;
-               return;
-               }
-            }
-        }
-        if((colIdx == GRID_LENGTH - rowidx - 1)){
-            if ( (grid[colIdx][rowidx] == 1 && grid[(colIdx+1)%GRID_LENGTH][(rowidx-1 + GRID_LENGTH)%GRID_LENGTH] == 1)){
-                if(grid[(colIdx+2)%GRID_LENGTH][(rowidx-2 + GRID_LENGTH)%GRID_LENGTH] == 0){
-                grid[(colIdx+2)%GRID_LENGTH][(rowidx-2 + GRID_LENGTH)%GRID_LENGTH] = 2;
-                return;
-                }
-             }
-        }
-        }
-    }
-        index = GenerateRandomIndex();
-        grid[index[0]][index[1]] = 2;
 
+
+        }
+        if((colIdx == GRID_LENGTH - rowidx - 1)){
+            
+            if(grid[colIdx][rowidx] == value){
+                sdcount++;
+            }
+            if(grid[colIdx][rowidx] == 0){
+                indexsd = [colIdx,rowidx]
+            }
+        }
+        }
+    }
+    if(pdcount == GRID_LENGTH -1 ){
+        if(indexpd.length>0){
+        grid[indexpd[0]][indexpd[1]] = 2;
+    return true;
+        }
+    }
+    if(sdcount == GRID_LENGTH -1 ){
+        if(indexsd.length>0){
+        grid[indexsd[0]][indexsd[1]] = 2;
+        return true;
+        }
+        }
+    
+        return false;
 }
 
 function addClickHandlers() {
@@ -243,28 +250,48 @@ function addClickHandlers() {
 }
 
 function checkWinner(turn) {
-    var value = turn == 'X'? 1:2;
-    for (let colIdx = 0;colIdx < GRID_LENGTH; colIdx++) { 
-        if (grid[colIdx][0]==grid[colIdx][1] && 
-            grid[colIdx][1]==grid[colIdx][2] && grid[colIdx][0] == value) 
-        { 
-            return grid[colIdx][0];
+    let value = turn == 'X'? 1:2;
+    let count = 0 , pdcount = 0,sdcount = 0 ;
+    for (let colIdx = 0;colIdx < GRID_LENGTH ; colIdx++) {
+        for (let rowidx = 0; rowidx < GRID_LENGTH;rowidx++) {
+            if(grid[rowidx][colIdx] == value){
+                count++;
+            }
+        }
+        if(count == GRID_LENGTH) {
+        return value;
+        }
+        count = 0;
+    }
+    count = 0;
+    for (let rowidx = 0; rowidx < GRID_LENGTH;rowidx++){
+        for (let colIdx = 0;colIdx < GRID_LENGTH ; colIdx++){
+            if(grid[rowidx][colIdx] == value){
+                count++;
+            }
+        }
+        if(count == GRID_LENGTH) {
+            return value;
+            }
+            count = 0;
+
+    }
+    for (let colIdx = 0;colIdx < GRID_LENGTH ; colIdx++) {
+        for (let rowidx = 0; rowidx < GRID_LENGTH;rowidx++) {
+            if((rowidx == colIdx) ){
+            if(grid[colIdx][rowidx] == value){
+                pdcount++;
+            }
+        }
+        if((colIdx == GRID_LENGTH - rowidx - 1)){
+            if(grid[colIdx][rowidx] == value){
+                sdcount++;
+            }
+        }
         }
     }
-    for (let rowidx = 0;rowidx < GRID_LENGTH; rowidx++) { 
-            if (grid[0][rowidx]==grid[1][rowidx] && 
-                grid[1][rowidx]==grid[2][rowidx] && grid[0][rowidx] == value) 
-            { 
-                return grid[0][rowidx]; 
-            }   
-    } 
-
-    if(grid[0][0] == grid[1][1] && grid[2][2] == grid[1][1] && grid[0][0] == value){
-        return grid[0][0];
-    }
-
-    if(grid[0][2] == grid[1][1] && grid[1][1] == grid[2][0] && grid[0][2] == value){
-        return grid[1][1];
+    if(pdcount == GRID_LENGTH  || sdcount == GRID_LENGTH  ){
+    return value;
     }
     return -1;
 }
